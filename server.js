@@ -8,18 +8,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const CLIENT_ID = "SiCPlcOYSpqRqu6hCZeLuw";
+const CLIENT_SECRET = "bCPPKwVLCyBN507tTgdlHZUlKXplYzwC";
+const ACCOUNT_ID = "nljggsNnTaqIAgP5isRorg"; // Needed for Server-to-Server OAuth apps
+
+// Zoom OAuth token endpoint
+const ZOOM_TOKEN_URL = "https://zoom.us/oauth/token";
+
 // Showroom Routes
-const showroomRoutes = require("./routes/showroomRoutes");
+const authRoutes = require("./routes/auth");
 
-app.use("/api/showrooms", showroomRoutes);
+app.use("/api/auth", authRoutes);
 
-// Main API
-app.get("/", (req, res) => {
-    res.json({
-        success: true,
-        message: "Damneth ERP API is Running!"
-    });
-});
+
 
 // Server
 const PORT = process.env.PORT || 5000;
