@@ -1,12 +1,11 @@
 
 const mysql = require("mysql2/promise");
-require("dotenv").config();
 
 const pool = mysql.createPool({
     host: 'localhost',
-    user: 'damneth',
-    password: 'Damneth#456',
-    database: 'damneth',
+    user: 'CodeStack',
+    password: 'CSLMS#456',
+    database: 'eduSpace',
     port: 3306,
 
     waitForConnections: true,
