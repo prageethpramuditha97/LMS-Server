@@ -4,13 +4,13 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const db = require("../config/db");
 
-// GET - All Accounts
+// GET - All Users
 router.get("/", async (req, res) => {
     try {
         const [rows] = await db.query(
             `SELECT ID, Name, Username, Account_Type,
              MobileNumber, Email, ProfilePicture, Term, RegNumber
-             FROM Accounts`
+             FROM Users`
         );
 
         res.json(rows);
@@ -25,7 +25,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
     try {
         const [rows] = await db.query(
-            "SELECT ID, Name, Username, Account_Type, MobileNumber, Email, ProfilePicture, Term, RegNumber FROM Accounts WHERE ID = ?",
+            "SELECT ID, Name, Username, Account_Type, MobileNumber, Email, ProfilePicture, Term, RegNumber FROM Users WHERE ID = ?",
             [req.params.id]
         );
 
@@ -65,7 +65,7 @@ router.post("/", async (req, res) => {
         const hashedPassword = await bcrypt.hash(Password, 10);
 
         const [result] = await db.query(
-            `INSERT INTO Accounts
+            `INSERT INTO Users
             (Name, Username, Password, Account_Type, MobileNumber,
              Email, ProfilePicture, Term, RegNumber)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -115,7 +115,7 @@ router.put("/:id", async (req, res) => {
         } = req.body;
 
         let query = `
-            UPDATE Accounts SET
+            UPDATE Users SET
             Name = ?,
             Username = ?,
             Account_Type = ?,
@@ -166,7 +166,7 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
     try {
         const [result] = await db.query(
-            "DELETE FROM Accounts WHERE ID = ?",
+            "DELETE FROM Users WHERE ID = ?",
             [req.params.id]
         );
 
