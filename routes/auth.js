@@ -184,4 +184,98 @@ router.delete("/:id", async (req, res) => {
 });
 
 
+app.post("/api/edu/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // Check required fields
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and password required"
+            });
+        }
+
+        // Check username/email in MySQL
+        const [rows] = await db.execute(
+            "SELECT * FROM users WHERE email = ? LIMIT 1",
+            [email]
+        );
+
+        if (rows.length === 0) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
+        }
+
+        const user = rows[0];
+
+        // Check password
+        const passwordMatch = await bcrypt.compare(
+            password,
+            user.password
+        );
+
+        if (!passwordMatch) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
+        }
+
+        // Generate JWT expiration (3–6 days)
+        const min = 3 * 24 * 60 * 60;
+        const max = 6 * 24 * 60 * 60;
+
+        const randomExpire = Math.floor(
+            Math.random() * (max - min)
+        ) + min;
+
+        // Generate JWT token
+        const token = jwt.sign(
+            {
+                id: user.id,
+                email: user.email
+            },
+            JWT_SECRET,
+            { expiresIn: randomExpire }
+        );
+
+        // Fetch user orders
+        const [orders] = await db.execute(
+            `SELECT
+                p.id AS productID,
+                p.name AS productName,
+                p.price AS productPrice
+             FROM user_orders uo
+             INNER JOIN products p ON p.id = uo.product_id
+             WHERE uo.user_id = ?`,
+            [user.id]
+        );
+
+        // Remove password
+        delete user.password;
+
+        // Successful response
+        return res.status(200).json({
+            success: true,
+            token,
+            user: {
+                ...user,
+                orders
+            },
+            randomExpire
+        });
+
+    } catch (error) {
+        console.error("Login Error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+});
+
 module.exports = router;
