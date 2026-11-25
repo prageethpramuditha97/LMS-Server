@@ -2,14 +2,27 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const db = require("../config/db");
+
+// JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // GET - All Users
 router.get("/", async (req, res) => {
     try {
         const [rows] = await db.query(
-            `SELECT ID, Name, Username, Account_Type,
-             MobileNumber, Email, ProfilePicture, Term, RegNumber
+            `SELECT
+                ID,
+                Name,
+                Address,
+                Username,
+                Account_Type,
+                MobileNumber,
+                Email,
+                ProfilePicture,
+                Term,
+                RegNumber
              FROM Users`
         );
 
@@ -25,12 +38,26 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
     try {
         const [rows] = await db.query(
-            "SELECT ID, Name, Username, Account_Type, MobileNumber, Email, ProfilePicture, Term, RegNumber FROM Users WHERE ID = ?",
+            `SELECT
+                ID,
+                Name,
+                Address,
+                Username,
+                Account_Type,
+                MobileNumber,
+                Email,
+                ProfilePicture,
+                Term,
+                RegNumber
+             FROM Users
+             WHERE ID = ?`,
             [req.params.id]
         );
 
         if (rows.length === 0) {
-            return res.status(404).json({ message: "Account not found" });
+            return res.status(404).json({
+                message: "Account not found"
+            });
         }
 
         res.json(rows[0]);
@@ -46,6 +73,7 @@ router.post("/", async (req, res) => {
     try {
         const {
             Name,
+            Address,
             Username,
             Password,
             Account_Type,
@@ -66,11 +94,22 @@ router.post("/", async (req, res) => {
 
         const [result] = await db.query(
             `INSERT INTO Users
-            (Name, Username, Password, Account_Type, MobileNumber,
-             Email, ProfilePicture, Term, RegNumber)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (
+                Name,
+                Address,
+                Username,
+                Password,
+                Account_Type,
+                MobileNumber,
+                Email,
+                ProfilePicture,
+                Term,
+                RegNumber
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 Name,
+                Address || null,
                 Username,
                 hashedPassword,
                 Account_Type || null,
@@ -104,6 +143,7 @@ router.put("/:id", async (req, res) => {
     try {
         const {
             Name,
+            Address,
             Username,
             Password,
             Account_Type,
@@ -116,18 +156,20 @@ router.put("/:id", async (req, res) => {
 
         let query = `
             UPDATE Users SET
-            Name = ?,
-            Username = ?,
-            Account_Type = ?,
-            MobileNumber = ?,
-            Email = ?,
-            ProfilePicture = ?,
-            Term = ?,
-            RegNumber = ?
+                Name = ?,
+                Address = ?,
+                Username = ?,
+                Account_Type = ?,
+                MobileNumber = ?,
+                Email = ?,
+                ProfilePicture = ?,
+                Term = ?,
+                RegNumber = ?
         `;
 
         let values = [
             Name,
+            Address ?? null,
             Username,
             Account_Type,
             MobileNumber,
@@ -137,8 +179,10 @@ router.put("/:id", async (req, res) => {
             RegNumber
         ];
 
+        // Update password only when provided
         if (Password) {
             const hashedPassword = await bcrypt.hash(Password, 10);
+
             query += ", Password = ?";
             values.push(hashedPassword);
         }
@@ -154,9 +198,17 @@ router.put("/:id", async (req, res) => {
             });
         }
 
-        res.json({ message: "Account updated successfully" });
+        res.json({
+            message: "Account updated successfully"
+        });
 
     } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).json({
+                message: "Username already exists"
+            });
+        }
+
         res.status(500).json({ message: error.message });
     }
 });
@@ -176,7 +228,9 @@ router.delete("/:id", async (req, res) => {
             });
         }
 
-        res.json({ message: "Account deleted successfully" });
+        res.json({
+            message: "Account deleted successfully"
+        });
 
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -184,7 +238,8 @@ router.delete("/:id", async (req, res) => {
 });
 
 
-app.post("/api/edu/login", async (req, res) => {
+// POST - Login
+router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -196,9 +251,9 @@ app.post("/api/edu/login", async (req, res) => {
             });
         }
 
-        // Check username/email in MySQL
+        // Check username in MySQL
         const [rows] = await db.execute(
-            "SELECT * FROM users WHERE email = ? LIMIT 1",
+            "SELECT * FROM Users WHERE Username = ? LIMIT 1",
             [email]
         );
 
@@ -214,7 +269,7 @@ app.post("/api/edu/login", async (req, res) => {
         // Check password
         const passwordMatch = await bcrypt.compare(
             password,
-            user.password
+            user.Password
         );
 
         if (!passwordMatch) {
@@ -235,8 +290,8 @@ app.post("/api/edu/login", async (req, res) => {
         // Generate JWT token
         const token = jwt.sign(
             {
-                id: user.id,
-                email: user.email
+                id: user.ID,
+                email: user.Email
             },
             JWT_SECRET,
             { expiresIn: randomExpire }
@@ -251,13 +306,12 @@ app.post("/api/edu/login", async (req, res) => {
              FROM user_orders uo
              INNER JOIN products p ON p.id = uo.product_id
              WHERE uo.user_id = ?`,
-            [user.id]
+            [user.ID]
         );
 
-        // Remove password
-        delete user.password;
+        // Remove password before returning user
+        delete user.Password;
 
-        // Successful response
         return res.status(200).json({
             success: true,
             token,
