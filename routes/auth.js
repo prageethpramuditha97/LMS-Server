@@ -133,7 +133,7 @@ router.post("/", async (req, res) => {
             });
         }
 
-        res.status(500).json({ message: error.message , data: req.body });
+        res.status(500).json({ message: req.body });
     }
 });
 
