@@ -241,20 +241,20 @@ router.delete("/:id", async (req, res) => {
 // POST - Login
 router.post("/login", async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { email, password } = req.body;
 
         // Check required fields
-        if (!username || !password) {
+        if (!email || !password) {
             return res.status(400).json({
                 success: false,
-                message: "Username and password required"
+                message: "Email and password required"
             });
         }
 
         // Check username in MySQL
         const [rows] = await db.execute(
             "SELECT * FROM Users WHERE Username = ? LIMIT 1",
-            [username]
+            [email]
         );
 
         if (rows.length === 0) {
@@ -291,7 +291,7 @@ router.post("/login", async (req, res) => {
         const token = jwt.sign(
             {
                 id: user.ID,
-                username: user.Username
+                email: user.Email
             },
             JWT_SECRET,
             { expiresIn: randomExpire }
