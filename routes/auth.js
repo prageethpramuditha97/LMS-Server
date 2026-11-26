@@ -297,17 +297,17 @@ router.post("/login", async (req, res) => {
             { expiresIn: randomExpire }
         );
 
-        // Fetch user orders
+        /* Fetch user orders
         const [orders] = await db.execute(
             `SELECT
-                p.id AS productID,
-                p.name AS productName,
-                p.price AS productPrice
+                p.productID AS productID,
+                p.productName AS productName,
+                p.productPrice AS productPrice
              FROM Products uo
-             INNER JOIN products p ON p.id = uo.product_id
+             INNER JOIN Products p ON p.id = uo.productID
              WHERE uo.user_id = ?`,
             [user.ID]
-        );
+        );*/
 
         // Remove password before returning user
         delete user.Password;
@@ -317,7 +317,7 @@ router.post("/login", async (req, res) => {
             token,
             user: {
                 ...user,
-                orders
+                //orders
             },
             randomExpire
         });
