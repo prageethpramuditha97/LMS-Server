@@ -16,10 +16,6 @@ app.use(cors({
 
 app.use(express.json());
 
-// Parse URL-encoded requests (optional)
-app.use(express.urlencoded({ extended: true }));
-
-
 const CLIENT_ID = "SiCPlcOYSpqRqu6hCZeLuw";
 const CLIENT_SECRET = "bCPPKwVLCyBN507tTgdlHZUlKXplYzwC";
 const ACCOUNT_ID = "nljggsNnTaqIAgP5isRorg"; // Needed for Server-to-Server OAuth apps
