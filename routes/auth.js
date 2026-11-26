@@ -303,7 +303,7 @@ router.post("/login", async (req, res) => {
                 p.id AS productID,
                 p.name AS productName,
                 p.price AS productPrice
-             FROM user_orders uo
+             FROM Products uo
              INNER JOIN products p ON p.id = uo.product_id
              WHERE uo.user_id = ?`,
             [user.ID]
