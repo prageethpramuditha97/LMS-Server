@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const db = require("../config/db");
 
 // JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = 'CodeStacl_eduSpaceLMS_V2';
 
 // GET - All Users
 router.get("/", async (req, res) => {
